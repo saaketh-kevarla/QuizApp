@@ -1,16 +1,18 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
+import {styled} from 'styled-components'
+import Header from './components/Header'
+import QuizBox from './components/QuizBox'
+
 
 
 
 function App() {
-  
-
   return (
     <>
-      
+      <Header />
+      <QuizBox />
     </>
   )
 }
 
-export default App
+export default App;
