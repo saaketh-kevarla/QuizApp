@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {styled} from 'styled-components';
 import { questions } from '../questions';
 
@@ -32,64 +32,171 @@ const MCQDiv = styled.div`
         //text-align : start;
        
     }
+    
+    & .options ul li.isSelected {
+        background-color : orange;
+        color : pink;
+    }
 
     & li:hover {
         background-color : #5D3FD3;
     }
 
-    & li:hover p {
+    &  li:hover p {
         color : white;
     }
 
 `
 
 export default function MCQ(){
-    const [question, setQuestion] = useState(0);
-    const [progressval,setProgressVal] = useState(3000);
     
 
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [selectedOptions, setSelectedOptions] = useState([]); // Stores the index of the selected option for each question
+    const [progressVal, setProgressVal] = useState(3000); // Progress for auto-advance
+    const [selectProgress, setSelectProgress] = useState(1500);
+
+    const autoAdvanceTimerRef = useRef(null);
+    const progressIntervalRef = useRef(null);
+    const selectTimerRef = useRef(null);
+    const selectProgressIntervalRef = useRef(null);
+    
+
+
+
     useEffect(() => {
-        const timer = setTimeout(() => {
-            console.log('open');
-            setQuestion((prevQ) => {
-                if(prevQ < questions.length - 1){
-                return prevQ +1
-                }
-                return questions.length - 1
+        if (autoAdvanceTimerRef.current) {
+            clearTimeout(autoAdvanceTimerRef.current);
+        }
+
+        if(currentQuestionIndex< questions.length){
+            autoAdvanceTimerRef.current = setTimeout(() => {
+                setCurrentQuestionIndex((prevQ) => prevQ+1)
             }
-        )},3000)
+            ,3000)
+    }
 
         return () =>{
-            console.log('close');
-            clearTimeout(timer);
+            clearTimeout(autoAdvanceTimerRef.current);
+            }
+    },[currentQuestionIndex]);
+
+
+
+
+    useEffect(() => {
+
+        if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
         }
-    },[question]);
 
+        setProgressVal(3000);
 
-
-    useEffect(() =>{
-        const interval = setInterval(() => {
-            setProgressVal((prevVal) => prevVal - 10)
+        progressIntervalRef.current = setInterval(() => {
+            setProgressVal((prevVal) => {
+                if(prevVal <= 0){
+                    clearInterval(progressIntervalRef.current)
+                    return 0;
+                }
+                return prevVal -10;
+            })
         },10)
 
         return () => {
-            clearInterval(interval);
-            setProgressVal(3000);
+            clearInterval(progressIntervalRef.current);
         }
-    },[question])
+    },[currentQuestionIndex])
 
+
+
+    useEffect(() => {
+        if(selectTimerRef.current){
+            clearTimeout(selectTimerRef.current);
+        }
+        if(selectProgressIntervalRef.current){
+            clearTimeout(selectProgressIntervalRef.current);
+        }
+
+        setSelectProgress(1500); 
+
+        if(selectedOptions[currentQuestionIndex] !== undefined){
+            selectProgressIntervalRef.current = setInterval(()=>{
+                setSelectProgress((prevProgress) => {
+                if(prevProgress<=0){
+                    clearInterval(selectProgressIntervalRef.current);
+                    return 0;
+                }
+                return prevProgress - 10;
+            })
+        },10)
+        
+        selectTimerRef.current = setTimeout(() =>{
+            setCurrentQuestionIndex((prevQ) => {
+                if (prevQ < questions.length - 1) {
+                    return prevQ + 1;
+                    }
+                return prevQ; 
+                });
+        },1500)
+        }
+
+        return () => {
+            clearTimeout(selectTimerRef.current);
+            clearInterval(selectProgressIntervalRef.current);
+        };
+
+        
+    },[currentQuestionIndex,selectedOptions])
+
+
+    
+
+    function handleSelectOption(index){
+       if (selectedOptions[currentQuestionIndex] === undefined) {
+        setSelectedOptions((prevOptions) => {
+            const newOptions = [...prevOptions];
+            newOptions[currentQuestionIndex] = index;
+            return newOptions;
+        })
+    }
+
+    console.log(selectedOptions);
+
+    
+    
+}
+
+let correctAns = 0;
+
+    if(currentQuestionIndex >= questions.length){
+        return (
+            <>
+            <MCQDiv>
+            {selectedOptions.map((ele) => {
+                if(ele === 0){
+                    correctAns = correctAns + 1;
+                }
+            })}
+            <h1>{correctAns} / {questions.length - 1}</h1>
+            </MCQDiv>
+            </>
+        )
+    }
 
 
     return (
         <MCQDiv>
-            <progress value={progressval} max={3000} ></progress>
-            <h3>{questions[question].text}</h3>
+            <progress value={selectedOptions[currentQuestionIndex]?selectProgress:progressVal} max={selectedOptions[currentQuestionIndex]?1500:3000} ></progress>
+            <h3>{questions[currentQuestionIndex].text}</h3>
 
             <div className='options'>
                 <ul>
-                    {questions[question].answers.map((ele,ind) => <li key={ind}><p>{ele}</p></li>)}
+                    {questions[currentQuestionIndex].answers.map((ele,ind) => <li key={ind} onClick={() => handleSelectOption(ind)} className={selectedOptions[currentQuestionIndex] === ind ? 'isSelected' : undefined} ><p>{ele}</p></li>)}
                 </ul>
             </div>
+            {/* {console.log(options)} */}
         </MCQDiv>
     )
 }
+
+
