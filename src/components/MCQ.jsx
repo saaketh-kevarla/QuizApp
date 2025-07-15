@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {styled} from 'styled-components';
 import { questions } from '../questions'; // Assuming this path is correct
+import { Results } from './Results';
 
 const MCQDiv = styled.div`
     & h3{
@@ -56,8 +57,11 @@ const MCQDiv = styled.div`
 `;
 
 export default function MCQ(){
+
+     const arr = new Array(7);
+     
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedOptions, setSelectedOptions] = useState([]); 
+    const [selectedOptions, setSelectedOptions] = useState(arr); 
     const [progressVal, setProgressVal] = useState(3000); 
     const [selectProgress, setSelectProgress] = useState(1500);
     const [feedbackPhase,setFeedbackPhase] = useState(false);
@@ -66,6 +70,8 @@ export default function MCQ(){
     const progressIntervalRef = useRef(null);
     const selectTimerRef = useRef(null);
     const selectProgressIntervalRef = useRef(null);
+
+   
     
 
     useEffect(() => {
@@ -210,7 +216,7 @@ export default function MCQ(){
         }
         return (
             <MCQDiv>
-                <h1>{correctAns} / {questions.length}</h1>
+               <Results selectedOptions = {selectedOptions}> </Results>
             </MCQDiv>
         );
     }
